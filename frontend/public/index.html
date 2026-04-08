@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API Analytics System — Alert Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #0a0a0f;
+    --surface: #414150;
+    --surface2: #4b4b64;
+    --border: #9b5e5e;
+    --text: #ffffff;
+    --muted: #ffffff;
+    --accent: #6b64ce;
+    --accent2: #68f304;
+    --critical: #ff4444;
+    --high: #ff8c00;
+    --medium: #f0c040;
+    --low: #4ade80;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Roboto', sans-serif;
+}
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 18px 32px; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-icon { width: 36px; height: 36px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .logo h1 { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
+  .logo span { color: var(--muted); font-size: 13px; font-weight: 400; margin-left: 8px; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent2); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  main { max-width: 1400px; margin: 0 auto; padding: 28px 32px; }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; transition: border-color 0.2s; }
+  .stat-card:hover { border-color: var(--accent); }
+  .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 8px; }
+  .stat-value { font-size: 32px; font-weight: 800; font-family: var(--mono); }
+  .stat-value.critical { color: var(--critical); } .stat-value.high { color: var(--high); }
+  .stat-value.medium { color: var(--medium); } .stat-value.low { color: var(--low); }
+  .stat-value.total { color: var(--text); } .stat-value.resolved { color: var(--accent2); }
+  .controls { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+  .search-box { flex: 1; min-width: 200px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-family: var(--sans); font-size: 14px; outline: none; transition: border-color 0.2s; }
+  .search-box:focus { border-color: var(--accent); }
+  .search-box::placeholder { color: var(--muted); }
+  select.filter-select { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; color: var(--text); font-family: var(--sans); font-size: 14px; outline: none; cursor: pointer; }
+  .btn { padding: 10px 18px; border-radius: 8px; border: none; font-family: var(--sans); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-primary { background: var(--accent); color: white; } .btn-primary:hover { background: #7c75ff; }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--text); }
+  .btn-danger { background: rgba(255,68,68,0.15); color: var(--critical); border: 1px solid rgba(255,68,68,0.3); }
+  .btn-success { background: rgba(0,212,170,0.15); color: var(--accent2); border: 1px solid rgba(0,212,170,0.3); }
+  .test-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 24px; overflow: hidden; }
+  .test-panel-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; cursor: pointer; user-select: none; }
+  .test-panel-header h3 { font-size: 14px; font-weight: 600; }
+  .test-panel-body { padding: 20px; display: none; border-top: 1px solid var(--border); }
+  .test-panel-body.open { display: block; }
+  textarea.json-input { width: 100%; height: 180px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px; color: var(--accent2); font-family: var(--mono); font-size: 13px; outline: none; resize: vertical; }
+  textarea.json-input:focus { border-color: var(--accent); }
+  .test-actions { display: flex; gap: 10px; margin-top: 12px; }
+  .alerts-container { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .alerts-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+  .alerts-header h2 { font-size: 15px; font-weight: 700; }
+  .alert-count { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 3px 12px; font-size: 12px; font-family: var(--mono); }
+  .alerts-list { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: var(--surface2); }
+  th { padding: 12px 16px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); font-weight: 600; white-space: nowrap; }
+  td { padding: 14px 16px; border-top: 1px solid var(--border); vertical-align: top; }
+  tr:hover td { background: rgba(108,99,255,0.04); }
+  .severity-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; font-family: var(--mono); text-transform: uppercase; }
+  .sev-CRITICAL { background: rgba(255,68,68,0.15); color: var(--critical); border: 1px solid rgba(255,68,68,0.3); }
+  .sev-HIGH { background: rgba(255,140,0,0.15); color: var(--high); border: 1px solid rgba(255,140,0,0.3); }
+  .sev-MEDIUM { background: rgba(240,192,64,0.15); color: var(--medium); border: 1px solid rgba(240,192,64,0.3); }
+  .sev-LOW { background: rgba(74,222,128,0.15); color: var(--low); border: 1px solid rgba(74,222,128,0.3); }
+  .status-code { font-family: var(--mono); font-size: 13px; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+  .sc-ok { color: var(--low); background: rgba(74,222,128,0.1); }
+  .sc-err { color: var(--critical); background: rgba(255,68,68,0.1); }
+  .sc-warn { color: var(--medium); background: rgba(240,192,64,0.1); }
+  .api-name { font-weight: 700; font-size: 14px; }
+  .api-meta { font-size: 12px; color: var(--muted); font-family: var(--mono); margin-top: 2px; }
+  .alert-message { font-size: 13px; line-height: 1.5; color: #ffffff; max-width: 400px; }
+  .anomaly-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .anomaly-tag { font-size: 10px; font-family: var(--mono); background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; color: var(--muted); }
+  .actions { display: flex; gap: 6px; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 6px; }
+  .resolved-row td { opacity: 0.45; }
+  .resolved-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-family: var(--mono); background: rgba(0,212,170,0.1); color: var(--accent2); border: 1px solid rgba(0,212,170,0.2); }
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; }
+  .timestamp { font-size: 11px; font-family: var(--mono); color: var(--muted); }
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; font-size: 14px; z-index: 999; animation: slideIn 0.3s ease; max-width: 340px; }
+  .toast.success { border-color: var(--accent2); color: var(--accent2); }
+  .toast.error { border-color: var(--critical); color: var(--critical); }
+  @keyframes slideIn { from{ transform:translateY(20px);opacity:0 } to{ transform:translateY(0);opacity:1 } }
+  .loading { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 8px; vertical-align: middle; }
+  @keyframes spin { to{ transform:rotate(360deg) } }
+  .resp-time { font-family: var(--mono); font-size: 13px; }
+  .rt-critical { color: var(--critical); } .rt-high { color: var(--high); } .rt-ok { color: var(--accent2); }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <div><h1>API Analytics System <span>Alert Dashboard</span></h1></div>
+  </div>
+  <div class="header-right">
+    <div class="status-dot"></div>
+    <span style="font-size:13px;color:var(--muted);">Live</span>
+    <button class="btn btn-ghost" onclick="loadAlerts()">↻ Refresh</button>
+  </div>
+</header>
+<main>
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card"><div class="stat-label">Total Alerts</div><div class="stat-value total" id="s-total">—</div></div>
+    <div class="stat-card"><div class="stat-label">Active</div><div class="stat-value high" id="s-active">—</div></div>
+    <div class="stat-card"><div class="stat-label">Resolved</div><div class="stat-value resolved" id="s-resolved">—</div></div>
+    <div class="stat-card"><div class="stat-label">Critical</div><div class="stat-value critical" id="s-critical">—</div></div>
+    <div class="stat-card"><div class="stat-label">High</div><div class="stat-value high" id="s-high">—</div></div>
+    <div class="stat-card"><div class="stat-label">Medium</div><div class="stat-value medium" id="s-medium">—</div></div>
+  </div>
+  <div class="test-panel">
+    <div class="test-panel-header" onclick="toggleTestPanel()">
+      <h3>🧪 Submit API Responses for Monitoring</h3>
+      <span style="color:var(--muted);font-size:12px;" id="testPanelToggle">▼ Expand</span>
+    </div>
+    <div class="test-panel-body" id="testPanelBody">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Paste a JSON array of API responses. The system will detect anomalies and generate AI alerts.</p>
+      <textarea class="json-input" id="jsonInput" placeholder='[{"api_name":"PatientDataAPI","response_time_ms":1200,"status_code":200,"records_returned":50},{"api_name":"AppointmentAPI","response_time_ms":5500,"status_code":500,"records_returned":0}]'></textarea>
+      <div class="test-actions">
+        <button class="btn btn-primary" onclick="submitMonitor()">⚡ Submit for Analysis</button>
+        <button class="btn btn-ghost" onclick="loadSampleData()">Load Sample Data</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('jsonInput').value=''">Clear</button>
+      </div>
+    </div>
+  </div>
+  <div class="controls">
+    <input class="search-box" type="text" id="searchInput" placeholder="Search by API name…" oninput="filterAlerts()">
+    <select class="filter-select" id="severityFilter" onchange="filterAlerts()">
+      <option value="">All Severities</option>
+      <option value="CRITICAL">Critical</option>
+      <option value="HIGH">High</option>
+      <option value="MEDIUM">Medium</option>
+      <option value="LOW">Low</option>
+    </select>
+    <select class="filter-select" id="resolvedFilter" onchange="loadAlerts()">
+      <option value="">All Status</option>
+      <option value="false">Active Only</option>
+      <option value="true">Resolved Only</option>
+    </select>
+  </div>
+  <div class="alerts-container">
+    <div class="alerts-header">
+      <h2>Detected Anomalies</h2>
+      <span class="alert-count" id="alertCount">0 alerts</span>
+    </div>
+    <div class="alerts-list" id="alertsList">
+      <div class="loading"><span class="spinner"></span>Loading alerts…</div>
+    </div>
+  </div>
+</main>
+<script>
+const API = '';
+let allAlerts = [];
+
+async function loadStats() {
+  try {
+    const res = await fetch(`${API}/alerts/stats`);
+    const data = await res.json();
+    if (!data.success) return;
+    const s = data.stats;
+    document.getElementById('s-total').textContent = s.total_alerts;
+    document.getElementById('s-active').textContent = s.active_alerts;
+    document.getElementById('s-resolved').textContent = s.resolved_alerts;
+    document.getElementById('s-critical').textContent = s.by_severity?.CRITICAL || 0;
+    document.getElementById('s-high').textContent = s.by_severity?.HIGH || 0;
+    document.getElementById('s-medium').textContent = s.by_severity?.MEDIUM || 0;
+  } catch(e) { console.error('Stats error:', e); }
+}
+
+async function loadAlerts() {
+  const resolved = document.getElementById('resolvedFilter').value;
+  let url = `${API}/alerts?limit=100`;
+  if (resolved !== '') url += `&resolved=${resolved}`;
+  document.getElementById('alertsList').innerHTML = '<div class="loading"><span class="spinner"></span>Loading alerts…</div>';
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    allAlerts = data.alerts || [];
+    filterAlerts();
+    loadStats();
+  } catch(e) {
+    document.getElementById('alertsList').innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div><p>Cannot connect to backend. Make sure the server is running.</p></div>';
+  }
+}
+
+function filterAlerts() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const severity = document.getElementById('severityFilter').value;
+  let filtered = allAlerts;
+  if (search) filtered = filtered.filter(a => a.api_name.toLowerCase().includes(search));
+  if (severity) filtered = filtered.filter(a => a.severity === severity);
+  renderAlerts(filtered);
+}
+
+function renderAlerts(alerts) {
+  document.getElementById('alertCount').textContent = `${alerts.length} alert${alerts.length !== 1 ? 's' : ''}`;
+  if (!alerts.length) {
+    document.getElementById('alertsList').innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><p>No alerts found. All systems healthy!</p></div>';
+    return;
+  }
+  document.getElementById('alertsList').innerHTML = `
+    <table>
+      <thead><tr><th>API / Time</th><th>Severity</th><th>Status</th><th>Response Time</th><th>Alert Message</th><th>Actions</th></tr></thead>
+      <tbody>${alerts.map(a => renderRow(a)).join('')}</tbody>
+    </table>`;
+}
+
+function renderRow(a) {
+  const scClass = a.status_code >= 500 ? 'sc-err' : a.status_code >= 400 ? 'sc-warn' : 'sc-ok';
+  const rtClass = a.response_time_ms >= 8000 ? 'rt-critical' : a.response_time_ms >= 3000 ? 'rt-high' : 'rt-ok';
+  const date = new Date(a.createdAt).toLocaleString();
+  const tags = (a.anomalies || []).map(an => `<span class="anomaly-tag">${esc(an.substring(0,50))}</span>`).join('');
+  return `
+    <tr class="${a.is_resolved ? 'resolved-row' : ''}">
+      <td><div class="api-name">${esc(a.api_name)}</div><div class="api-meta">${a.records_returned} records</div><div class="timestamp">${date}</div></td>
+      <td><span class="severity-badge sev-${a.severity}">${a.severity}</span>${a.is_resolved ? '<br><span class="resolved-badge" style="margin-top:6px;display:inline-block">✓ Resolved</span>' : ''}</td>
+      <td><span class="status-code ${scClass}">${a.status_code}</span></td>
+      <td><span class="resp-time ${rtClass}">${a.response_time_ms}ms</span></td>
+      <td><div class="alert-message">${esc(a.ai_alert_message)}</div><div class="anomaly-tags">${tags}</div></td>
+      <td><div class="actions">${!a.is_resolved ? `<button class="btn btn-success btn-sm" onclick="resolveAlert('${a._id}')">✓</button>` : ''}<button class="btn btn-danger btn-sm" onclick="deleteAlert('${a._id}')">✕</button></div></td>
+    </tr>`;
+}
+
+async function resolveAlert(id) {
+  try {
+    const res = await fetch(`${API}/alerts/${id}/resolve`, { method: 'PATCH' });
+    const data = await res.json();
+    if (data.success) { toast('Alert resolved ✓', 'success'); loadAlerts(); }
+  } catch(e) { toast('Failed to resolve', 'error'); }
+}
+
+async function deleteAlert(id) {
+  if (!confirm('Delete this alert?')) return;
+  try {
+    const res = await fetch(`${API}/alerts/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.success) { toast('Alert deleted', 'success'); loadAlerts(); }
+  } catch(e) { toast('Failed to delete', 'error'); }
+}
+
+async function submitMonitor() {
+  const raw = document.getElementById('jsonInput').value.trim();
+  if (!raw) { toast('Please enter JSON data', 'error'); return; }
+  let parsed;
+  try { parsed = JSON.parse(raw); } catch(e) { toast('Invalid JSON format', 'error'); return; }
+  try {
+    const res = await fetch(`${API}/monitor`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(parsed) });
+    const data = await res.json();
+    if (data.success) { toast(`✓ ${data.message}`, 'success'); loadAlerts(); }
+    else { toast(data.message || 'Processing failed', 'error'); }
+  } catch(e) { toast('Cannot connect to backend', 'error'); }
+}
+
+function loadSampleData() {
+  document.getElementById('jsonInput').value = JSON.stringify([
+    { api_name: "PatientDataAPI", response_time_ms: 1200, status_code: 200, records_returned: 50 },
+    { api_name: "AppointmentAPI", response_time_ms: 5500, status_code: 500, records_returned: 0 },
+    { api_name: "BillingAPI", response_time_ms: 9200, status_code: 200, records_returned: 0 },
+    { api_name: "LabResultsAPI", response_time_ms: 450, status_code: 404, records_returned: 0 },
+    { api_name: "NotificationAPI", response_time_ms: 280, status_code: 200, records_returned: 12 }
+  ], null, 2);
+}
+
+function toggleTestPanel() {
+  const body = document.getElementById('testPanelBody');
+  const toggle = document.getElementById('testPanelToggle');
+  body.classList.toggle('open');
+  toggle.textContent = body.classList.contains('open') ? '▲ Collapse' : '▼ Expand';
+}
+
+function toast(msg, type = 'success') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+loadAlerts();
+setInterval(loadAlerts, 30000);
+</script>
+</body>
+</html>
