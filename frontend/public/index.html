@@ -13,7 +13,7 @@
     --border: #9b5e5e;
     --text: #ffffff;
     --muted: #ffffff;
-    --accent: #6b64ce;
+    --accent: #7d829e;
     --accent2: #68f304;
     --critical: #ff4444;
     --high: #ff8c00;
@@ -105,7 +105,9 @@
 <body>
 <header>
   <div class="logo">
-    <div class="logo-icon">⚡</div>
+    <div class="logo-icon">
+  <img src="/logo.png" alt="logo" style="width:40px; height:40px;">
+</div>
     <div><h1>API Analytics System <span>Alert Dashboard</span></h1></div>
   </div>
   <div class="header-right">
@@ -132,7 +134,7 @@
       <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Paste a JSON array of API responses. The system will detect anomalies and generate AI alerts.</p>
       <textarea class="json-input" id="jsonInput" placeholder='[{"api_name":"PatientDataAPI","response_time_ms":1200,"status_code":200,"records_returned":50},{"api_name":"AppointmentAPI","response_time_ms":5500,"status_code":500,"records_returned":0}]'></textarea>
       <div class="test-actions">
-        <button class="btn btn-primary" onclick="submitMonitor()">⚡ Submit for Analysis</button>
+        <button class="btn btn-primary" onclick="submitMonitor()">Submit for Analysis</button>
         <button class="btn btn-ghost" onclick="loadSampleData()">Load Sample Data</button>
         <button class="btn btn-ghost" onclick="document.getElementById('jsonInput').value=''">Clear</button>
       </div>
@@ -300,3 +302,4 @@ setInterval(loadAlerts, 30000);
 </script>
 </body>
 </html>
+
