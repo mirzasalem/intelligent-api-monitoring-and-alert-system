@@ -249,3 +249,12 @@ All activity is logged to:
 - Console (colorized)
 - `logs/combined.log` — all logs
 - `logs/error.log` — errors only
+
+
+ 
+
+## 👨 Author
+
+Mirza Salem  
+[GitHub](https://github.com/mirzasalem/) | [LinkedIn](https://www.linkedin.com/in/mirzasalem/) | [Portfolio](https://mirzasalem.vercel.app/)
+
