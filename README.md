@@ -84,7 +84,7 @@ npm install
 
 ### Step 3 — Create environment file
 ```bash
-cp .env.example .env
+touch .env
 ```
 
 Now open `.env` and add your values:
